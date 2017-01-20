@@ -486,7 +486,7 @@ namespace entry
 			WindowHandle defaultWindow = { 0 };
 			setWindowSize(defaultWindow, m_width, m_height, true);
 
-			bx::FileReaderI* reader = getFileReader();
+			/*bx::FileReaderI* reader = getFileReader();
 			if (bx::open(&reader, "gamecontrollerdb.txt") )
 			{
 				bx::AllocatorI* allocator = getAllocator();
@@ -498,7 +498,7 @@ namespace entry
 				SDL_GameControllerAddMapping( (char*)data);
 
 				BX_FREE(allocator, data);
-			}
+			}*/
 
 			bool exit = false;
 			SDL_Event event;
