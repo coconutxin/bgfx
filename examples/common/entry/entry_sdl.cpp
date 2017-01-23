@@ -1096,10 +1096,18 @@ namespace entry
 
 } // namespace entry
 
+#if !ENTRY_CONFIG_USE_SDLQT
+
 int main(int _argc, char** _argv)
 {
 	using namespace entry;
 	return s_ctx.run(_argc, _argv);
 }
+
+#else
+
+
+#endif
+
 
 #endif // ENTRY_CONFIG_USE_SDL

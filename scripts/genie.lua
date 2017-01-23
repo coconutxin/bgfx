@@ -19,6 +19,11 @@ newoption {
 }
 
 newoption {
+	trigger = "with-sdlqt",
+	description = "Enable SDLQT entry.",
+}
+
+newoption {
 	trigger = "with-glfw",
 	description = "Enable GLFW entry.",
 }
@@ -98,6 +103,10 @@ end
 function copyLib()
 end
 
+if _OPTIONS["with-sdlqt"] then
+	_OPTIONS["with-sdl"] = ""
+end
+
 if _OPTIONS["with-sdl"] then
 	if os.is("windows") then
 		if not os.getenv("SDL2_DIR") then
@@ -146,6 +155,10 @@ function exampleProject(_name)
 		"bgfx",
 		"bx",
 	}
+
+	if _OPTIONS["with-sdlqt"] then
+		defines { "ENTRY_CONFIG_USE_SDLQT=1" }
+	end
 
 	if _OPTIONS["with-sdl"] then
 		defines { "ENTRY_CONFIG_USE_SDL=1" }
