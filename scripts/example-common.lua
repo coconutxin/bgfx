@@ -47,8 +47,8 @@ project ("example-common")
 		}
 	end
 
-    if _OPTIONS["with-sdlqt"] then
-		defines { "ENTRY_CONFIG_USE_SDLQT=1" }
+    if _OPTIONS["with-common-lib"] then
+		defines { "ENTRY_CONFIG_USE_COMMON_LIB=1" }
 	end
 
 	if _OPTIONS["with-sdl"] then

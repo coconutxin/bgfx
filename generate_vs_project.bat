@@ -1,0 +1,1 @@
+..\bx\tools\bin\windows\genie --with-examples --with-sdl --with-common-lib vs2015

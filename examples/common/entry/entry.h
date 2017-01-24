@@ -24,8 +24,8 @@ extern "C" int _main_(int _argc, char** _argv);
 			{ \
 				_app app; \
 				return entry::runApp(&app, _argc, _argv); \
-			}
-
+			} \
+			COC_ENTRY_MAIN
 namespace entry
 {
 	struct WindowHandle  { uint16_t idx; };
@@ -309,5 +309,49 @@ namespace entry
 	int runApp(AppI* _app, int _argc, char** _argv);
 
 } // namespace entry
+
+#if ENTRY_CONFIG_USE_COMMON_LIB
+
+#include <memory> //auto_ptr class
+
+#if defined(_MSC_VER)
+#	define COC_LIB_API __declspec(dllexport)
+#else
+#   define COC_LIB_API
+#endif
+
+class COC_LIB_API CocBGFXEntry
+{
+public:
+	static CocBGFXEntry* instance() {
+		if (!s_instance.get())
+		{
+			s_instance = std::auto_ptr<CocBGFXEntry>(new CocBGFXEntry());
+		}
+		return s_instance.get();
+	}
+
+	CocBGFXEntry();
+	~CocBGFXEntry();
+
+	bool init(int _argc, char** _argv);
+	bool do_step();
+	int  finallize();
+
+private:
+	bool m_isinit;
+	static std::auto_ptr<CocBGFXEntry> s_instance;
+};
+
+#	define COC_ENTRY_MAIN \
+	int main(int _argc, char** _argv) { \
+		CocBGFXEntry* entry = CocBGFXEntry::instance(); \
+		bool loop = entry->init(_argc, _argv); \
+		while (loop){ loop = entry->do_step(); } \
+		return entry->finallize(); \
+	}
+#else
+#	define COC_ENTRY_MAIN 
+#endif //ENTRY_CONFIG_USE_COMMON_LIB
 
 #endif // ENTRY_H_HEADER_GUARD

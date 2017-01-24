@@ -19,8 +19,8 @@ newoption {
 }
 
 newoption {
-	trigger = "with-sdlqt",
-	description = "Enable SDLQT entry.",
+	trigger = "with-common-lib",
+	description = "Enable common lib entry.",
 }
 
 newoption {
@@ -103,10 +103,6 @@ end
 function copyLib()
 end
 
-if _OPTIONS["with-sdlqt"] then
-	_OPTIONS["with-sdl"] = ""
-end
-
 if _OPTIONS["with-sdl"] then
 	if os.is("windows") then
 		if not os.getenv("SDL2_DIR") then
@@ -156,8 +152,8 @@ function exampleProject(_name)
 		"bx",
 	}
 
-	if _OPTIONS["with-sdlqt"] then
-		defines { "ENTRY_CONFIG_USE_SDLQT=1" }
+	if _OPTIONS["with-common-lib"] then
+		defines { "ENTRY_CONFIG_USE_COMMON_LIB=1" }
 	end
 
 	if _OPTIONS["with-sdl"] then
