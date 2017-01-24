@@ -314,12 +314,14 @@ namespace entry
 
 #include <memory> //auto_ptr class
 
-#if defined(_MSC_VER)
-#	define COC_LIB_API __declspec(dllexport)
-#else
-#   define COC_LIB_API
-#endif
+#	if defined(_MSC_VER)
+#		define COC_LIB_API __declspec(dllexport)
+#	else
+#		define COC_LIB_API
+#	endif
 
+#	ifndef __COC_BGFX_ENTRY__
+#	define __COC_BGFX_ENTRY__
 class COC_LIB_API CocBGFXEntry
 {
 public:
@@ -342,6 +344,7 @@ private:
 	bool m_isinit;
 	static std::auto_ptr<CocBGFXEntry> s_instance;
 };
+#	endif //__COC_BGFX_ENTRY__
 
 #	define COC_ENTRY_MAIN \
 	int main(int _argc, char** _argv) { \
