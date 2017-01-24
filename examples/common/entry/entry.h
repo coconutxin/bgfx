@@ -336,7 +336,7 @@ public:
 	CocBGFXEntry();
 	~CocBGFXEntry();
 
-	bool init(int _argc, char** _argv);
+	bool init(int _argc, char** _argv, const void* _winid = NULL);
 	bool do_step();
 	int  finallize();
 
