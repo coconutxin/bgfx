@@ -1582,7 +1582,10 @@ std::auto_ptr<CocBGFXEntry> CocBGFXEntry::s_instance;
 
 CocBGFXEntry::CocBGFXEntry():m_isinit(false){ }
 
-CocBGFXEntry::~CocBGFXEntry() { finallize(); }
+CocBGFXEntry::~CocBGFXEntry() 
+{ 
+	finallize(); 
+}
 
 bool CocBGFXEntry::init(int _argc, char** _argv, const void* _winid)
 { 
@@ -1608,6 +1611,7 @@ int CocBGFXEntry::finallize()
 {
 	if (m_isinit)
 	{
+		m_isinit = false;
 		return entry::s_ctx.finallize();
 	}
 	return 0;

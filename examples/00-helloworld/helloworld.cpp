@@ -14,8 +14,8 @@ class ExampleHelloWorld : public entry::AppI
 	{
 		Args args(_argc, _argv);
 
-		m_width  = 1280;
-		m_height = 720;
+		m_width  = 640;
+		m_height = 360;
 		m_debug  = BGFX_DEBUG_TEXT;
 		m_reset  = BGFX_RESET_VSYNC;
 
