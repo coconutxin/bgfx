@@ -322,6 +322,16 @@ namespace entry
 
 #	ifndef __COC_BGFX_ENTRY__
 #	define __COC_BGFX_ENTRY__
+
+struct CoCEntryParam
+{
+	int _argc;
+	char** _argv;
+	void* _winid;
+	uint32_t _width;
+	uint32_t _height;
+};
+
 class COC_LIB_API CocBGFXEntry
 {
 public:
@@ -333,10 +343,15 @@ public:
 		return s_instance.get();
 	}
 
+	static void release() {
+		CocBGFXEntry* tmp = s_instance.release();
+		delete tmp;
+	}
+
 	CocBGFXEntry();
 	~CocBGFXEntry();
 
-	bool init(int _argc, char** _argv, const void* _winid = NULL);
+	bool init(CoCEntryParam& param);
 	bool do_step();
 	int  finallize();
 
@@ -348,8 +363,9 @@ private:
 
 #	define COC_ENTRY_MAIN \
 	int main(int _argc, char** _argv) { \
+		CoCEntryParam param = { _argc, _argv, NULL, 640, 320}; \
 		CocBGFXEntry* entry = CocBGFXEntry::instance(); \
-		bool loop = entry->init(_argc, _argv); \
+		bool loop = entry->init(param); \
 		while (loop){ loop = entry->do_step(); } \
 		return entry->finallize(); \
 	}

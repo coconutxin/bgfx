@@ -916,7 +916,7 @@ namespace entry
 		}
 
 #if ENTRY_CONFIG_USE_COMMON_LIB
-		bool init(int _argc, char** _argv, const void* _winid)
+		bool init(int _argc, char** _argv, const void* _winid, uint32_t _w, uint32_t _h)
 		{
 			m_mte.m_argc = _argc;
 			m_mte.m_argv = _argv;
@@ -929,18 +929,24 @@ namespace entry
 
 			if(_winid)
 			{
-					m_window[0] = SDL_CreateWindowFrom(_winid);
+				m_window[0] = SDL_CreateWindowFrom(_winid);
+				int tx, ty;
+				m_width = tx;
+				m_height = ty;
+				SDL_GetWindowSize(m_window[0], &tx, &ty);
 			}
 			else
 			{
-					m_window[0] = SDL_CreateWindow("bgfx"
-						, SDL_WINDOWPOS_UNDEFINED
-						, SDL_WINDOWPOS_UNDEFINED
-						, m_width
-						, m_height
-						, SDL_WINDOW_SHOWN
-						| SDL_WINDOW_RESIZABLE
-						);
+				m_width = _w;
+				m_height = _h;
+				m_window[0] = SDL_CreateWindow("bgfx"
+					, SDL_WINDOWPOS_UNDEFINED
+					, SDL_WINDOWPOS_UNDEFINED
+					, m_width
+					, m_height
+					, SDL_WINDOW_SHOWN
+					| SDL_WINDOW_RESIZABLE
+					);
 			}
 
 			m_flags[0] = 0
@@ -1587,9 +1593,9 @@ CocBGFXEntry::~CocBGFXEntry()
 	finallize(); 
 }
 
-bool CocBGFXEntry::init(int _argc, char** _argv, const void* _winid)
+bool CocBGFXEntry::init(CoCEntryParam& param)
 { 
-	if (entry::s_ctx.init(_argc, _argv, _winid))
+	if (entry::s_ctx.init(param._argc, param._argv, param._winid, param._width, param._height))
 	{
 		m_isinit = true;
 	}
