@@ -1584,6 +1584,9 @@ int main(int _argc, char** _argv)
 }
 
 #else
+
+#include "bx/commandline.h"
+
 std::auto_ptr<CocBGFXEntry> CocBGFXEntry::s_instance;
 
 CocBGFXEntry::CocBGFXEntry():m_isinit(false){ }
@@ -1593,9 +1596,15 @@ CocBGFXEntry::~CocBGFXEntry()
 	finallize(); 
 }
 
-bool CocBGFXEntry::init(CoCEntryParam& param)
+bool CocBGFXEntry::init(int _argc, char** _argv, void* _winid)
 { 
-	if (entry::s_ctx.init(param._argc, param._argv, param._winid, param._width, param._height))
+	bx::CommandLine cmd(_argc, _argv);
+	uint32_t _w = 0;
+	uint32_t _h = 0;
+	if (!cmd.hasArg(_w, 'w')) { _w = ENTRY_DEFAULT_WIDTH; }
+	if (!cmd.hasArg(_h, 'h')) { _h = ENTRY_DEFAULT_HEIGHT; }
+
+	if (entry::s_ctx.init(_argc, _argv, _winid, _w, _h))
 	{
 		m_isinit = true;
 	}
