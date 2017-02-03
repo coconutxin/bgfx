@@ -282,6 +282,7 @@ namespace entry
 			, m_width(0)
 			, m_height(0)
 			, m_flags(0)
+			, m_win_id(NULL)
 		{
 		}
 
@@ -290,6 +291,7 @@ namespace entry
 		uint32_t m_width;
 		uint32_t m_height;
 		uint32_t m_flags;
+		void*    m_win_id;
 		tinystl::string m_title;
 	};
 
@@ -922,7 +924,7 @@ namespace entry
 			m_mte.m_argv = _argv;
 
 			SDL_Init(0
-				| SDL_INIT_GAMECONTROLLER
+				| SDL_INIT_GAMECONTROLLER | SDL_INIT_VIDEO
 				);
 
 			m_windowAlloc.alloc();
@@ -931,9 +933,9 @@ namespace entry
 			{
 				m_window[0] = SDL_CreateWindowFrom(_winid);
 				int tx, ty;
+				SDL_GetWindowSize(m_window[0], &tx, &ty);
 				m_width = tx;
 				m_height = ty;
-				SDL_GetWindowSize(m_window[0], &tx, &ty);
 			}
 			else
 			{
@@ -1277,14 +1279,25 @@ namespace entry
 						WindowHandle handle = getWindowHandle(uev);
 						Msg* msg = (Msg*)uev.data2;
 
-						m_window[handle.idx] = SDL_CreateWindow(msg->m_title.c_str()
-							, msg->m_x
-							, msg->m_y
-							, msg->m_width
-							, msg->m_height
-							, SDL_WINDOW_SHOWN
-							| SDL_WINDOW_RESIZABLE
-							);
+						if (msg->m_win_id)
+						{
+							m_window[handle.idx] = SDL_CreateWindowFrom(msg->m_win_id);
+							int tx, ty;
+							SDL_GetWindowSize(m_window[handle.idx], &tx, &ty);
+							msg->m_width = tx;
+							msg->m_height = ty;
+						}
+						else
+						{
+							m_window[handle.idx] = SDL_CreateWindow(msg->m_title.c_str()
+								, msg->m_x
+								, msg->m_y
+								, msg->m_width
+								, msg->m_height
+								, SDL_WINDOW_SHOWN
+								| SDL_WINDOW_RESIZABLE
+								);
+						}
 
 						m_flags[handle.idx] = msg->m_flags;
 
@@ -1382,6 +1395,7 @@ namespace entry
 
 		int finallize()
 		{ 
+			m_eventQueue.postExitEvent();
 			while (bgfx::RenderFrame::NoContext != bgfx::renderFrame()) {};
 			m_thread.shutdown();
 
@@ -1502,6 +1516,28 @@ namespace entry
 			msg->m_height = _height;
 			msg->m_title  = _title;
 			msg->m_flags  = _flags;
+
+			sdlPostEvent(SDL_USER_WINDOW_CREATE, handle, msg);
+		}
+
+		return handle;
+	}
+
+	WindowHandle createWindowFromWinID(void* _win_id, const char* _title)
+	{
+		bx::LwMutexScope scope(s_ctx.m_lock);
+		WindowHandle handle = { s_ctx.m_windowAlloc.alloc() };
+
+		if (UINT16_MAX != handle.idx)
+		{
+			Msg* msg = new Msg;
+			msg->m_x = 0;
+			msg->m_y = 0;
+			msg->m_width = 0;
+			msg->m_height = 0;
+			msg->m_title = _title;
+			msg->m_flags = ENTRY_WINDOW_FLAG_NONE;
+			msg->m_win_id = _win_id;
 
 			sdlPostEvent(SDL_USER_WINDOW_CREATE, handle, msg);
 		}

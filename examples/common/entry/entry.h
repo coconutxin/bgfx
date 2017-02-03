@@ -240,6 +240,7 @@ namespace entry
 	bx::AllocatorI*  getAllocator();
 
 	WindowHandle createWindow(int32_t _x, int32_t _y, uint32_t _width, uint32_t _height, uint32_t _flags = ENTRY_WINDOW_FLAG_NONE, const char* _title = "");
+	WindowHandle createWindowFromWinID(void* _win_id, const char* _title = "");
 	void destroyWindow(WindowHandle _handle);
 	void setWindowPos(WindowHandle _handle, int32_t _x, int32_t _y);
 	void setWindowSize(WindowHandle _handle, uint32_t _width, uint32_t _height);
