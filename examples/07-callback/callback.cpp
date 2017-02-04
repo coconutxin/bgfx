@@ -459,3 +459,5 @@ int _main_(int _argc, char** _argv)
 
 	return 0;
 }
+
+COC_ENTRY_MAIN

@@ -331,18 +331,31 @@ namespace entry
 		return cast.h;
 	}
 
+	struct WinSize
+	{
+		uint32_t m_width;
+		uint32_t m_height;
+
+		WinSize()
+			: m_width(0)
+			, m_height(0)
+		{
+		}
+	};
+
 	struct Context
 	{
 		Context()
-			: m_width(ENTRY_DEFAULT_WIDTH)
-			, m_height(ENTRY_DEFAULT_HEIGHT)
-			, m_aspectRatio(16.0f/9.0f)
+			: m_aspectRatio(16.0f/9.0f)
 			, m_mx(0)
 			, m_my(0)
 			, m_mz(0)
 			, m_mouseLock(false)
 			, m_fullscreen(false)
+			, m_init(false)
 		{
+			m_size[0].m_width = ENTRY_DEFAULT_WIDTH;
+			m_size[0].m_height = ENTRY_DEFAULT_HEIGHT;
 			memset(s_translateKey, 0, sizeof(s_translateKey) );
 			initTranslateKey(SDL_SCANCODE_ESCAPE,       Key::Esc);
 			initTranslateKey(SDL_SCANCODE_RETURN,       Key::Return);
@@ -453,6 +466,8 @@ namespace entry
 			initTranslateGamepadAxis(SDL_CONTROLLER_AXIS_TRIGGERRIGHT, GamepadAxis::RightZ);
 		}
 
+		~Context() { m_init = false; }
+
 		int run(int _argc, char** _argv)
 		{
 			m_mte.m_argc = _argc;
@@ -466,8 +481,8 @@ namespace entry
 			m_window[0] = SDL_CreateWindow("bgfx"
 							, SDL_WINDOWPOS_UNDEFINED
 							, SDL_WINDOWPOS_UNDEFINED
-							, m_width
-							, m_height
+							, m_size[0].m_width
+							, m_size[0].m_height
 							, SDL_WINDOW_SHOWN
 							| SDL_WINDOW_RESIZABLE
 							);
@@ -486,7 +501,7 @@ namespace entry
 
 			// Force window resolution...
 			WindowHandle defaultWindow = { 0 };
-			setWindowSize(defaultWindow, m_width, m_height, true);
+			setWindowSize(defaultWindow, m_size[0].m_width, m_size[0].m_height, true);
 
 			/*bx::FileReaderI* reader = getFileReader();
 			if (bx::open(reader, "gamecontrollerdb.txt") )
@@ -934,18 +949,18 @@ namespace entry
 				m_window[0] = SDL_CreateWindowFrom(_winid);
 				int tx, ty;
 				SDL_GetWindowSize(m_window[0], &tx, &ty);
-				m_width = tx;
-				m_height = ty;
+				m_size[0].m_width = tx;
+				m_size[0].m_height = ty;
 			}
 			else
 			{
-				m_width = _w;
-				m_height = _h;
+				m_size[0].m_width = _w;
+				m_size[0].m_height = _h;
 				m_window[0] = SDL_CreateWindow("bgfx"
 					, SDL_WINDOWPOS_UNDEFINED
 					, SDL_WINDOWPOS_UNDEFINED
-					, m_width
-					, m_height
+					, m_size[0].m_width
+					, m_size[0].m_height
 					, SDL_WINDOW_SHOWN
 					| SDL_WINDOW_RESIZABLE
 					);
@@ -965,10 +980,11 @@ namespace entry
 
 			// Force window resolution...
 			WindowHandle defaultWindow = { 0 };
-			setWindowSize(defaultWindow, m_width, m_height, true);
+			setWindowSize(defaultWindow, m_size[0].m_width, m_size[0].m_height, true);
 
 			m_inner_handle = defaultWindow;
 
+			m_init = true;
 			return true;
 		}
 		
@@ -1433,15 +1449,18 @@ namespace entry
 
 		void setWindowSize(WindowHandle _handle, uint32_t _width, uint32_t _height, bool _force = false)
 		{
-			if (_width  != m_width
-			||  _height != m_height
+			uint32_t& r_width = m_size[_handle.idx].m_width;
+			uint32_t& r_height = m_size[_handle.idx].m_height;
+
+			if (_width  != r_width
+			||  _height != r_height
 			||  _force)
 			{
-				m_width  = _width;
-				m_height = _height;
+				r_width = _width;
+				r_height = _height;
 
-				SDL_SetWindowSize(m_window[_handle.idx], m_width, m_height);
-				m_eventQueue.postSizeEvent(_handle, m_width, m_height);
+				SDL_SetWindowSize(m_window[_handle.idx], r_width, r_height);
+				m_eventQueue.postSizeEvent(_handle, r_width, r_height);
 			}
 		}
 
@@ -1474,8 +1493,7 @@ namespace entry
 		bx::HandleAllocT<ENTRY_CONFIG_MAX_GAMEPADS> m_gamepadAlloc;
 		GamepadSDL m_gamepad[ENTRY_CONFIG_MAX_GAMEPADS];
 
-		uint32_t m_width;
-		uint32_t m_height;
+		WinSize m_size[ENTRY_CONFIG_MAX_WINDOWS];
 		float m_aspectRatio;
 
 		int32_t m_mx;
@@ -1483,6 +1501,7 @@ namespace entry
 		int32_t m_mz;
 		bool m_mouseLock;
 		bool m_fullscreen;
+		bool m_init;
 	};
 
 	static Context s_ctx;
