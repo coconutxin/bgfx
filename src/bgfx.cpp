@@ -1942,7 +1942,7 @@ namespace bgfx
 		RendererContextI* renderCtx = NULL;
 		for (uint32_t ii = 0; ii < numScores; ++ii)
 		{
-			RendererType::Enum renderer = RendererType::OpenGL;//RendererType::Enum(scores[ii] & 0xff);
+			RendererType::Enum renderer = RendererType::Enum(scores[ii] & 0xff);
 			renderCtx = s_rendererCreator[renderer].createFn();
 			if (NULL != renderCtx)
 			{
@@ -3866,6 +3866,11 @@ error:
 	{
 		BGFX_CHECK_MAIN_THREAD();
 		s_ctx->saveScreenShot(_filePath);
+	}
+
+	void is_editor_multi_view(bool _is) 
+	{
+		s_ctx->is_editor_multi_view(_is);
 	}
 } // namespace bgfx
 
