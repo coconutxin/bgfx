@@ -2647,6 +2647,32 @@ namespace bgfx { namespace gl
 					) );
 			}
 		}
+		//编辑器情况下不崩溃
+		void is_editor_multi_view(bool _is_editor) BX_OVERRIDE
+		{
+			if (_is_editor)
+			{
+				if (m_vao)
+				{
+					m_vaoSupport = false;
+					GL_CHECK(glBindVertexArray(0));
+					GL_CHECK(glDeleteVertexArrays(1, &m_vao));
+					m_vao = 0;
+					m_vaoStateCache.invalidate();
+				}
+			}
+			else
+			{
+				if (!m_vao)
+				{
+					m_vaoSupport = !!(BGFX_CONFIG_RENDERER_OPENGLES >= 30)
+						|| s_extension[Extension::ARB_vertex_array_object].m_supported
+						|| s_extension[Extension::OES_vertex_array_object].m_supported
+						;
+					if (m_vaoSupport) GL_CHECK(glGenVertexArrays(1, &m_vao));
+				}
+			}
+		}
 
 		void updateResolution(const Resolution& _resolution)
 		{

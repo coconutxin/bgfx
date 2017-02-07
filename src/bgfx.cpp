@@ -622,7 +622,7 @@ namespace bgfx
 	{
 		BGFX_CHECK_MAIN_THREAD();
 
-		if (isValid(m_program) )
+		if (isValid(m_program))
 		{
 			destroyProgram(m_program);
 		}
@@ -1942,7 +1942,7 @@ namespace bgfx
 		RendererContextI* renderCtx = NULL;
 		for (uint32_t ii = 0; ii < numScores; ++ii)
 		{
-			RendererType::Enum renderer = RendererType::Enum(scores[ii] & 0xff);
+			RendererType::Enum renderer = RendererType::OpenGL;//RendererType::Enum(scores[ii] & 0xff);
 			renderCtx = s_rendererCreator[renderer].createFn();
 			if (NULL != renderCtx)
 			{
