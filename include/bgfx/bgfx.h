@@ -2821,8 +2821,6 @@ namespace bgfx
 	///
 	void saveScreenShot(const char* _filePath);
 
-	void is_editor_multi_view(bool _is);
-
 } // namespace bgfx
 
 #endif // BGFX_H_HEADER_GUARD
