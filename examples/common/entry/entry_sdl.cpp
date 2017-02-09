@@ -939,13 +939,14 @@ namespace entry
 			m_mte.m_argv = _argv;
 
 			SDL_Init(0
-				| SDL_INIT_GAMECONTROLLER | SDL_INIT_VIDEO
+				| SDL_INIT_GAMECONTROLLER
 				);
 
 			m_windowAlloc.alloc();
 
 			if(_winid)
 			{
+				SDL_VideoInit(NULL);
 				m_window[0] = SDL_CreateWindowFrom(_winid);
 				int tx, ty;
 				SDL_GetWindowSize(m_window[0], &tx, &ty);
