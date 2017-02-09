@@ -3868,10 +3868,6 @@ error:
 		s_ctx->saveScreenShot(_filePath);
 	}
 
-	void is_editor_multi_view(bool _is) 
-	{
-		s_ctx->is_editor_multi_view(_is);
-	}
 } // namespace bgfx
 
 #include <bgfx/c99/bgfx.h>
