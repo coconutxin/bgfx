@@ -2821,6 +2821,9 @@ namespace bgfx
 	///
 	void saveScreenShot(const char* _filePath);
 
+	typedef void(*print_out_cb)(const char*);
+	void set_print_out(print_out_cb cb);
+
 } // namespace bgfx
 
 #endif // BGFX_H_HEADER_GUARD

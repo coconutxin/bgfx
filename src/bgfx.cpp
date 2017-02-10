@@ -3868,6 +3868,11 @@ error:
 		s_ctx->saveScreenShot(_filePath);
 	}
 
+	void set_print_out(print_out_cb cb)
+	{
+		bx::s_cb = cb;
+	}
+
 } // namespace bgfx
 
 #include <bgfx/c99/bgfx.h>
