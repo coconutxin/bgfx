@@ -6149,6 +6149,7 @@ namespace bgfx { namespace gl
 			m_vaoStateCache.invalidate();
 		}
 
+
 		m_glctx.makeCurrent(NULL);
 
 		const GLuint defaultVao = m_vao;
@@ -6158,6 +6159,7 @@ namespace bgfx { namespace gl
 		}
 
 		GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, m_backBufferFbo) );
+
 
 		updateResolution(_render->m_resolution);
 
