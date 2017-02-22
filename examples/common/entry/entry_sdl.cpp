@@ -1546,7 +1546,7 @@ namespace entry
 
 	WindowHandle createWindowFromWinID(void* _win_id, const char* _title)
 	{
-		bx::LwMutexScope scope(s_ctx.m_lock);
+		bx::MutexScope scope(s_ctx.m_lock);
 		WindowHandle handle = { s_ctx.m_windowAlloc.alloc() };
 
 		if (UINT16_MAX != handle.idx)
