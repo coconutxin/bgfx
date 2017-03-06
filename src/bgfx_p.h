@@ -633,6 +633,7 @@ namespace bgfx
 			CreateFrameBuffer,
 			CreateUniform,
 			UpdateViewName,
+			InvalidateOcclusionQuery,
 			End,
 			RendererShutdownEnd,
 			DestroyVertexDecl,
@@ -646,7 +647,7 @@ namespace bgfx
 			DestroyFrameBuffer,
 			DestroyUniform,
 			ReadTexture,
-			SaveScreenShot,
+			RequestScreenShot,
 		};
 
 		void write(const void* _data, uint32_t _size)
@@ -2166,10 +2167,11 @@ namespace bgfx
 		virtual void destroyFrameBuffer(FrameBufferHandle _handle) = 0;
 		virtual void createUniform(UniformHandle _handle, UniformType::Enum _type, uint16_t _num, const char* _name) = 0;
 		virtual void destroyUniform(UniformHandle _handle) = 0;
-		virtual void saveScreenShot(const char* _filePath) = 0;
+		virtual void requestScreenShot(FrameBufferHandle _handle, const char* _filePath) = 0;
 		virtual void updateViewName(uint8_t _id, const char* _name) = 0;
 		virtual void updateUniform(uint16_t _loc, const void* _data, uint32_t _size) = 0;
 		virtual void setMarker(const char* _marker, uint32_t _size) = 0;
+		virtual void invalidateOcclusionQuery(OcclusionQueryHandle _handle) = 0;
 		virtual void submit(Frame* _render, ClearQuad& _clearQuad, TextVideoMemBlitter& _textVideoMemBlitter) = 0;
 		virtual void blitSetup(TextVideoMemBlitter& _blitter) = 0;
 		virtual void blitRender(TextVideoMemBlitter& _blitter, uint32_t _numIndices) = 0;
@@ -3600,7 +3602,11 @@ namespace bgfx
 			if (isValid(handle) )
 			{
 				m_submit->m_occlusion[handle.idx] = UINT8_MAX;
+
+				CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::InvalidateOcclusionQuery);
+				cmdbuf.write(handle);
 			}
+
 			return handle;
 		}
 
@@ -3625,10 +3631,23 @@ namespace bgfx
 			m_freeOcclusionQueryHandle[m_numFreeOcclusionQueryHandles++] = _handle;
 		}
 
-		BGFX_API_FUNC(void saveScreenShot(const char* _filePath) )
+		BGFX_API_FUNC(void requestScreenShot(FrameBufferHandle _handle, const char* _filePath) )
 		{
-			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::SaveScreenShot);
+			BGFX_CHECK_HANDLE_INVALID_OK("requestScreenShot", m_frameBufferHandle, _handle);
+
+			if (isValid(_handle) )
+			{
+				FrameBufferRef& ref = m_frameBufferRef[_handle.idx];
+				if (!ref.m_window)
+				{
+					BX_TRACE("requestScreenShot can be done only for window frame buffer handles (handle: %d).", _handle.idx);
+					return;
+				}
+			}
+
+			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::RequestScreenShot);
 			uint16_t len = (uint16_t)bx::strnlen(_filePath)+1;
+			cmdbuf.write(_handle);
 			cmdbuf.write(len);
 			cmdbuf.write(_filePath, len);
 		}
@@ -3672,6 +3691,11 @@ namespace bgfx
 
 		BGFX_API_FUNC(void setViewClear(uint8_t _id, uint16_t _flags, uint32_t _rgba, float _depth, uint8_t _stencil) )
 		{
+			BX_CHECK(bx::fequal(_depth, bx::fclamp(_depth, 0.0f, 1.0f), 0.0001f)
+				, "Clear depth value must be between 0.0 and 1.0 (_depth %f)."
+				, _depth
+				);
+
 			Clear& clear = m_clear[_id];
 			clear.m_flags = _flags;
 			clear.m_index[0] = uint8_t(_rgba>>24);
@@ -3684,6 +3708,11 @@ namespace bgfx
 
 		BGFX_API_FUNC(void setViewClear(uint8_t _id, uint16_t _flags, float _depth, uint8_t _stencil, uint8_t _0, uint8_t _1, uint8_t _2, uint8_t _3, uint8_t _4, uint8_t _5, uint8_t _6, uint8_t _7) )
 		{
+			BX_CHECK(bx::fequal(_depth, bx::fclamp(_depth, 0.0f, 1.0f), 0.0001f)
+				, "Clear depth value must be between 0.0 and 1.0 (_depth %f)."
+				, _depth
+				);
+
 			Clear& clear = m_clear[_id];
 			clear.m_flags = (_flags & ~BGFX_CLEAR_COLOR)
 				| (0xff != (_0&_1&_2&_3&_4&_5&_6&_7) ? BGFX_CLEAR_COLOR|BGFX_CLEAR_COLOR_USE_PALETTE : 0)
@@ -4031,7 +4060,7 @@ namespace bgfx
 		const char* getName(UniformHandle _handle) const;
 
 		// render thread
-		bool renderFrame();
+		RenderFrame::Enum renderFrame(int32_t _msecs = -1);
 		void flushTextureUpdateBatch(CommandBuffer& _cmdbuf);
 		void rendererExecCommands(CommandBuffer& _cmdbuf);
 

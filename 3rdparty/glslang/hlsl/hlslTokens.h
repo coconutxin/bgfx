@@ -65,6 +65,7 @@ enum EHlslTokenClass {
     EHTokOut,
     EHTokInOut,
     EHTokLayout,
+    EHTokGloballyCoherent,
 
     // primitive types
     EHTokPoint,
@@ -256,9 +257,18 @@ enum EHlslTokenClass {
     EHTokRWTexture3d,
     EHTokRWBuffer,
 
+    // Structure buffer variants
+    EHTokAppendStructuredBuffer,
+    EHTokByteAddressBuffer,
+    EHTokConsumeStructuredBuffer,
+    EHTokRWByteAddressBuffer,
+    EHTokRWStructuredBuffer,
+    EHTokStructuredBuffer,
+
     // variable, user type, ...
     EHTokIdentifier,
     EHTokTypeName,
+    EHTokClass,
     EHTokStruct,
     EHTokCBuffer,
     EHTokTBuffer,

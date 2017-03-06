@@ -355,6 +355,7 @@ namespace entry
 			, m_fullscreen(false)
 			, m_init(false)
 		{
+			bx::memSet(s_translateKey, 0, sizeof(s_translateKey) );
 			m_size[0].m_width = ENTRY_DEFAULT_WIDTH;
 			m_size[0].m_height = ENTRY_DEFAULT_HEIGHT;
 			memset(s_translateKey, 0, sizeof(s_translateKey) );

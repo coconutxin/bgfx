@@ -84,6 +84,7 @@ public:
     TIntermTyped* handleFunctionCall(const TSourceLoc&, TFunction*, TIntermTyped*);
     void decomposeIntrinsic(const TSourceLoc&, TIntermTyped*& node, TIntermNode* arguments);
     void decomposeSampleMethods(const TSourceLoc&, TIntermTyped*& node, TIntermNode* arguments);
+    void decomposeStructBufferMethods(const TSourceLoc&, TIntermTyped*& node, TIntermNode* arguments);
     void decomposeGeometryMethods(const TSourceLoc&, TIntermTyped*& node, TIntermNode* arguments);
     TIntermTyped* handleLengthMethod(const TSourceLoc&, TFunction*, TIntermNode*);
     void addInputArgumentConversions(const TFunction&, TIntermTyped*&);
@@ -132,6 +133,7 @@ public:
     const TFunction* findFunction(const TSourceLoc& loc, TFunction& call, bool& builtIn, TIntermTyped*& args);
     void declareTypedef(const TSourceLoc&, TString& identifier, const TType&);
     void declareStruct(const TSourceLoc&, TString& structName, TType&);
+    TSymbol* lookupUserType(const TString&, TType&);
     TIntermNode* declareVariable(const TSourceLoc&, TString& identifier, TType&, TIntermTyped* initializer = 0);
     void lengthenList(const TSourceLoc&, TIntermSequence& list, int size);
     TIntermTyped* addConstructor(const TSourceLoc&, TIntermNode*, const TType&);
@@ -178,6 +180,9 @@ public:
     // Reset data for incrementally built referencing of flattened composite structures
     void initFlattening() { flattenLevel.push_back(0); flattenOffset.push_back(0); }
     void finalizeFlattening() { flattenLevel.pop_back(); flattenOffset.pop_back(); }
+
+    // Share struct buffer deep types
+    void shareStructBufferType(TType&);
 
 protected:
     struct TFlattenData {
@@ -242,6 +247,18 @@ protected:
     void correctInput(TQualifier& qualifier);
     void correctUniform(TQualifier& qualifier);
     void clearUniformInputOutput(TQualifier& qualifier);
+
+    // Test method names
+    bool isSamplerMethod(const TString& name) const;
+    bool isStructBufferMethod(const TString& name) const;
+
+    TType* getStructBufferContentType(const TType& type) const;
+    bool isStructBufferType(const TType& type) const { return getStructBufferContentType(type) != nullptr; }
+    TIntermTyped* indexStructBufferContent(const TSourceLoc& loc, TIntermTyped* buffer) const;
+
+    // Return true if this type is a reference.  This is not currently a type method in case that's
+    // a language specific answer.
+    bool isReference(const TType& type) const { return isStructBufferType(type); }
 
     // Pass through to base class after remembering builtin mappings.
     using TParseContextBase::trackLinkage;
@@ -324,6 +341,9 @@ protected:
 
     // Structure splitting data:
     TMap<int, TVariable*>              splitIoVars;  // variables with the builtin interstage IO removed, indexed by unique ID.
+
+    // Structuredbuffer shared types.  Typically there are only a few.
+    TVector<TType*> structBufferTypes;
 
     // The builtin interstage IO map considers e.g, EvqPosition on input and output separately, so that we
     // can build the linkage correctly if position appears on both sides.  Otherwise, multiple positions
