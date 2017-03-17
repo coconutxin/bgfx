@@ -51,13 +51,4 @@ const char* const E_SPV_NV_stereo_view_rendering = "SPV_NV_stereo_view_rendering
 //SPV_NVX_multiview_per_view_attributes
 const char* const E_SPV_NVX_multiview_per_view_attributes = "SPV_NVX_multiview_per_view_attributes";
 
-
-//SPV_NVX_multiview_per_view_attributes
-const char* const E_SPV_NVX_multiview_per_view_attributes = "SPV_NVX_multiview_per_view_attributes";
-
-static const BuiltIn BuiltInPositionPerViewNV = static_cast<BuiltIn>(5260);
-static const BuiltIn BuiltInViewportMaskPerViewNV = static_cast<BuiltIn>(5261);
-
-static const Capability CapabilityPerViewAttributesNV = static_cast<Capability>(5262);
-
 #endif  // #ifndef GLSLextNV_H

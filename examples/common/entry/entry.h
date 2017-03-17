@@ -316,6 +316,7 @@ namespace entry
 
 #	if defined(_MSC_VER)
 #		define COC_LIB_API __declspec(dllexport)
+#		pragma warning(disable: 4251)
 #	else
 #		define COC_LIB_API
 #	endif

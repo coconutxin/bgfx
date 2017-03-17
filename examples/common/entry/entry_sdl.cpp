@@ -358,7 +358,7 @@ namespace entry
 			bx::memSet(s_translateKey, 0, sizeof(s_translateKey) );
 			m_size[0].m_width = ENTRY_DEFAULT_WIDTH;
 			m_size[0].m_height = ENTRY_DEFAULT_HEIGHT;
-			memset(s_translateKey, 0, sizeof(s_translateKey) );
+			//memset(s_translateKey, 0, sizeof(s_translateKey) );
 			initTranslateKey(SDL_SCANCODE_ESCAPE,       Key::Esc);
 			initTranslateKey(SDL_SCANCODE_RETURN,       Key::Return);
 			initTranslateKey(SDL_SCANCODE_TAB,          Key::Tab);

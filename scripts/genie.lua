@@ -146,6 +146,10 @@ function exampleProject(_name)
 		path.join(BGFX_DIR, "examples", _name, "**.bin.h"),
 	}
 
+	flags {
+		"FatalWarnings",
+	}
+
 	links {
 		"example-common",
 		"bgfx",
