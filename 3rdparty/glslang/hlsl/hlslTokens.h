@@ -66,6 +66,7 @@ enum EHlslTokenClass {
     EHTokInOut,
     EHTokLayout,
     EHTokGloballyCoherent,
+    EHTokInline,
 
     // primitive types
     EHTokPoint,
@@ -272,6 +273,7 @@ enum EHlslTokenClass {
     EHTokCBuffer,
     EHTokTBuffer,
     EHTokTypedef,
+    EHTokThis,
 
     // constant
     EHTokFloatConstant,

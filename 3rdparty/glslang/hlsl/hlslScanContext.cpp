@@ -119,6 +119,7 @@ void HlslScanContext::fillInKeywordMap()
     (*KeywordMap)["inout"] =                   EHTokInOut;
     (*KeywordMap)["layout"] =                  EHTokLayout;
     (*KeywordMap)["globallycoherent"] =        EHTokGloballyCoherent;
+    (*KeywordMap)["inline"] =                  EHTokInline;
 
     (*KeywordMap)["point"] =                   EHTokPoint;
     (*KeywordMap)["line"] =                    EHTokLine;
@@ -332,6 +333,7 @@ void HlslScanContext::fillInKeywordMap()
     (*KeywordMap)["cbuffer"] =                 EHTokCBuffer;
     (*KeywordMap)["tbuffer"] =                 EHTokTBuffer;
     (*KeywordMap)["typedef"] =                 EHTokTypedef;
+    (*KeywordMap)["this"] =                    EHTokThis;
 
     (*KeywordMap)["true"] =                    EHTokBoolConstant;
     (*KeywordMap)["false"] =                   EHTokBoolConstant;
@@ -373,7 +375,6 @@ void HlslScanContext::fillInKeywordMap()
     ReservedSet->insert("sizeof");
     ReservedSet->insert("static_cast");
     ReservedSet->insert("template");
-    ReservedSet->insert("this");
     ReservedSet->insert("throw");
     ReservedSet->insert("try");
     ReservedSet->insert("typename");
@@ -467,12 +468,9 @@ void HlslScanContext::tokenize(HlslToken& token)
     token.tokenClass = tokenClass;
 }
 
-glslang::TBuiltInVariable HlslScanContext::mapSemantic(const TString& semantic)
+glslang::TBuiltInVariable HlslScanContext::mapSemantic(const char* upperCase)
 {
-    TString semanticUpperCase = semantic;
-    std::transform(semanticUpperCase.begin(), semanticUpperCase.end(), semanticUpperCase.begin(), ::toupper);
-
-    auto it = SemanticMap->find(semanticUpperCase.c_str());
+    auto it = SemanticMap->find(upperCase);
     if (it != SemanticMap->end())
         return it->second;
     else
@@ -619,6 +617,7 @@ EHlslTokenClass HlslScanContext::tokenizeIdentifier()
     case EHTokPrecise:
     case EHTokLayout:
     case EHTokGloballyCoherent:
+    case EHTokInline:
         return keyword;
 
     // primitive types
@@ -828,6 +827,7 @@ EHlslTokenClass HlslScanContext::tokenizeIdentifier()
     case EHTokTypedef:
     case EHTokCBuffer:
     case EHTokTBuffer:
+    case EHTokThis:
         return keyword;
 
     case EHTokBoolConstant:

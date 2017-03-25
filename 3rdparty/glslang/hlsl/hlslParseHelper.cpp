@@ -601,10 +601,10 @@ int HlslParseContext::getMatrixComponentsColumn(int rows, const TSwizzleSelector
 //
 // Handle seeing a variable identifier in the grammar.
 //
-TIntermTyped* HlslParseContext::handleVariable(const TSourceLoc& loc, TSymbol* symbol, const TString* string)
+TIntermTyped* HlslParseContext::handleVariable(const TSourceLoc& loc, const TString* string)
 {
-    if (symbol == nullptr)
-        symbol = symbolTable.find(*string);
+    int thisDepth;
+    TSymbol* symbol = symbolTable.find(*string, thisDepth);
     if (symbol && symbol->getAsVariable() && symbol->getAsVariable()->isUserType()) {
         error(loc, "expected symbol, not user-defined type", string->c_str(), "");
         return nullptr;
@@ -614,14 +614,21 @@ TIntermTyped* HlslParseContext::handleVariable(const TSourceLoc& loc, TSymbol* s
     if (symbol && symbol->getNumExtensions())
         requireExtensions(loc, symbol->getNumExtensions(), symbol->getExtensions(), symbol->getName().c_str());
 
-    const TVariable* variable;
+    const TVariable* variable = nullptr;
     const TAnonMember* anon = symbol ? symbol->getAsAnonMember() : nullptr;
     TIntermTyped* node = nullptr;
     if (anon) {
-        // It was a member of an anonymous container.
+        // It was a member of an anonymous container, which could be a 'this' structure.
 
         // Create a subtree for its dereference.
-        variable = anon->getAnonContainer().getAsVariable();
+        if (thisDepth > 0) {
+            variable = getImplicitThis(thisDepth);
+            if (variable == nullptr)
+                error(loc, "cannot access member variables (static member function?)", "this", "");
+        }
+        if (variable == nullptr)
+            variable = anon->getAnonContainer().getAsVariable();
+
         TIntermTyped* container = intermediate.addSymbol(*variable, loc);
         TIntermTyped* constNode = intermediate.addConstantUnion(anon->getMemberNumber(), loc);
         node = intermediate.addIndex(EOpIndexDirectStruct, container, constNode, loc);
@@ -956,7 +963,7 @@ TIntermTyped* HlslParseContext::handleDotDereference(const TSourceLoc& loc, TInt
 // Return true if the field should be treated as a built-in method.
 // Return false otherwise.
 //
-bool HlslParseContext::isBuiltInMethod(const TSourceLoc& loc, TIntermTyped* base, const TString& field)
+bool HlslParseContext::isBuiltInMethod(const TSourceLoc&, TIntermTyped* base, const TString& field)
 {
     if (base == nullptr)
         return false;
@@ -1414,7 +1421,7 @@ void HlslParseContext::assignLocations(TVariable& variable)
 // Handle seeing a function declarator in the grammar.  This is the precursor
 // to recognizing a function prototype or function definition.
 //
-TFunction& HlslParseContext::handleFunctionDeclarator(const TSourceLoc& loc, TFunction& function, bool prototype)
+void HlslParseContext::handleFunctionDeclarator(const TSourceLoc& loc, TFunction& function, bool prototype)
 {
     //
     // Multiple declarations of the same function name are allowed.
@@ -1442,13 +1449,6 @@ TFunction& HlslParseContext::handleFunctionDeclarator(const TSourceLoc& loc, TFu
     // other forms of name collisions.
     if (! symbolTable.insert(function))
         error(loc, "function name is redeclaration of existing name", function.getName().c_str(), "");
-
-    //
-    // If this is a redeclaration, it could also be a definition,
-    // in which case, we need to use the parameter names from this one, and not the one that's
-    // being redeclared.  So, pass back this declaration, not the one in the symbol table.
-    //
-    return function;
 }
 
 // Add interstage IO variables to the linkage in canonical order.
@@ -1513,11 +1513,6 @@ TIntermAggregate* HlslParseContext::handleFunctionDefinition(const TSourceLoc& l
     // rest of this function doesn't care.
     entryPointTree = transformEntryPoint(loc, function, attributes);
 
-    // Insert the $Global constant buffer.
-    // TODO: this design fails if new members are declared between function definitions.
-    if (! insertGlobalUniformBlock())
-        error(loc, "failed to insert the global constant buffer", "uniform", "");
-
     //
     // New symbol table scope for body of function plus its arguments
     //
@@ -1537,18 +1532,24 @@ TIntermAggregate* HlslParseContext::handleFunctionDefinition(const TSourceLoc& l
         if (param.name != nullptr) {
             TVariable *variable = new TVariable(param.name, *param.type);
 
+            if (i == 0 && function.hasImplicitThis()) {
+                // Anonymous 'this' members are already in a symbol-table level,
+                // and we need to know what function parameter to map them to.
+                symbolTable.makeInternalVariable(*variable);
+                pushImplicitThis(variable);
+            }
             // Insert the parameters with name in the symbol table.
             if (! symbolTable.insert(*variable))
                 error(loc, "redefinition", variable->getName().c_str(), "");
-            else {
-                // Add the parameter to the AST
-                paramNodes = intermediate.growAggregate(paramNodes,
-                                                        intermediate.addSymbol(*variable, loc),
-                                                        loc);
-            }
+            // Add the parameter to the AST
+            paramNodes = intermediate.growAggregate(paramNodes,
+                                                    intermediate.addSymbol(*variable, loc),
+                                                    loc);
         } else
             paramNodes = intermediate.growAggregate(paramNodes, intermediate.addSymbol(*param.type, loc), loc);
     }
+    if (function.hasIllegalImplicitThis())
+        pushImplicitThis(nullptr);
 
     intermediate.setAggregateOperator(paramNodes, EOpParameters, TType(EbtVoid), loc);
     loopNestingLevel = 0;
@@ -1834,6 +1835,8 @@ void HlslParseContext::handleFunctionBody(const TSourceLoc& loc, TFunction& func
     node->getAsAggregate()->setName(function.getMangledName().c_str());
 
     popScope();
+    if (function.hasImplicitThis())
+        popImplicitThis();
 
     if (function.getType().getBasicType() != EbtVoid && ! functionReturnsValue)
         error(loc, "function does not return a value:", "", function.getName().c_str());
@@ -2096,6 +2099,10 @@ TIntermTyped* HlslParseContext::handleAssign(const TSourceLoc& loc, TOperator op
             // which we traverse in parallel.
             int memberL = 0;
             int memberR = 0;
+
+            // Handle empty structure assignment
+            if (int(membersL.size()) == 0 && int(membersR.size()) == 0)
+                assignList = intermediate.growAggregate(assignList, intermediate.addAssign(op, left, right, loc), loc);
 
             for (int member = 0; member < int(membersL.size()); ++member) {
                 const TType& typeL = *membersL[member].type;
@@ -3089,7 +3096,9 @@ void HlslParseContext::decomposeSampleMethods(const TSourceLoc& loc, TIntermType
             if (argOffset != nullptr)
                 txgather->getSequence().push_back(argOffset);
 
-            txgather->getSequence().push_back(argChannel);
+            // Add channel value if the sampler is not shadow
+            if (! argSamp->getType().getSampler().isShadow())
+                txgather->getSequence().push_back(argChannel);
 
             txgather->setType(node->getType());
             txgather->setLoc(loc);
@@ -3739,7 +3748,10 @@ TIntermTyped* HlslParseContext::handleFunctionCall(const TSourceLoc& loc, TFunct
         // It will have false positives, since it doesn't check arg counts or types.
         if (arguments && arguments->getAsAggregate()) {
             if (isStructBufferType(arguments->getAsAggregate()->getSequence()[0]->getAsTyped()->getType())) {
-                if (isStructBufferMethod(function->getName())) {
+                static const int methodPrefixSize = sizeof(BUILTIN_PREFIX)-1;
+
+                if (function->getName().length() > methodPrefixSize &&
+                    isStructBufferMethod(function->getName().substr(methodPrefixSize))) {
                     const TString mangle = function->getName() + "(";
                     TSymbol* symbol = symbolTable.find(mangle, &builtIn);
 
@@ -4149,7 +4161,7 @@ TFunction* HlslParseContext::handleConstructorCall(const TSourceLoc& loc, const 
 // Handle seeing a "COLON semantic" at the end of a type declaration,
 // by updating the type according to the semantic.
 //
-void HlslParseContext::handleSemantic(TSourceLoc loc, TQualifier& qualifier, TBuiltInVariable builtIn)
+void HlslParseContext::handleSemantic(TSourceLoc loc, TQualifier& qualifier, TBuiltInVariable builtIn, const TString& upperCase)
 {
     // adjust for stage in/out
 
@@ -4166,6 +4178,7 @@ void HlslParseContext::handleSemantic(TSourceLoc loc, TQualifier& qualifier, TBu
     }
 
     qualifier.builtIn = builtIn;
+    qualifier.semanticName = intermediate.addSemanticName(upperCase);
 }
 
 //
@@ -6687,13 +6700,6 @@ void HlslParseContext::declareBlock(const TSourceLoc& loc, TType& type, const TS
     trackLinkage(variable);
 }
 
-void HlslParseContext::finalizeGlobalUniformBlockLayout(TVariable& block)
-{
-    block.getWritableType().getQualifier().layoutPacking = ElpStd140;
-    block.getWritableType().getQualifier().layoutMatrix = ElmRowMajor;
-    fixBlockUniformOffsets(block.getType().getQualifier(), *block.getWritableType().getWritableStruct());
-}
-
 //
 // "For a block, this process applies to the entire block, or until the first member
 // is reached that has a location layout qualifier. When a block member is declared with a location
@@ -7089,7 +7095,16 @@ TIntermNode* HlslParseContext::addSwitch(const TSourceLoc& loc, TIntermTyped* ex
     return switchNode;
 }
 
-// Track levels of class/struct nesting with a prefix string using
+// Make a new symbol-table level that is made out of the members of a structure.
+// This should be done as an anonymous struct (name is "") so that the symbol table
+// finds the members with on explicit reference to a 'this' variable.
+void HlslParseContext::pushThisScope(const TType& thisStruct)
+{
+    TVariable& thisVariable = *new TVariable(NewPoolTString(""), thisStruct);
+    symbolTable.pushThis(thisVariable);
+}
+
+// Track levels of class/struct/namespace nesting with a prefix string using
 // the type names separated by the scoping operator. E.g., two levels
 // would look like:
 //
@@ -7097,39 +7112,41 @@ TIntermNode* HlslParseContext::addSwitch(const TSourceLoc& loc, TIntermTyped* ex
 //
 // The string is empty when at normal global level.
 //
-void HlslParseContext::pushThis(const TString& typeName)
+void HlslParseContext::pushNamespace(const TString& typeName)
 {
     // make new type prefix
     TString newPrefix;
     if (currentTypePrefix.size() > 0) {
         newPrefix = currentTypePrefix.back();
-        newPrefix.append("::");
+        newPrefix.append(scopeMangler);
     }
     newPrefix.append(typeName);
     currentTypePrefix.push_back(newPrefix);
 }
 
-// Opposite of pushThis(), see above
-void HlslParseContext::popThis()
+// Opposite of pushNamespace(), see above
+void HlslParseContext::popNamespace()
 {
     currentTypePrefix.pop_back();
 }
 
 // Use the class/struct nesting string to create a global name for
-// a member of a class/struct.  Static members use "::" for the final
-// step, while non-static members use ".".
-TString* HlslParseContext::getFullMemberFunctionName(const TString& memberName, bool isStatic) const
+// a member of a class/struct.
+TString* HlslParseContext::getFullNamespaceName(const TString& localName) const
 {
     TString* name = NewPoolTString("");
     if (currentTypePrefix.size() > 0)
         name->append(currentTypePrefix.back());
-    if (isStatic)
-        name->append("::");
-    else
-        name->append(".");
-    name->append(memberName);
+    name->append(scopeMangler);
+    name->append(localName);
 
     return name;
+}
+
+// Helper function to add the namespace scope mangling syntax to a string.
+void HlslParseContext::addScopeMangler(TString& name)
+{
+    name.append(scopeMangler);
 }
 
 // Potentially rename shader entry point function
