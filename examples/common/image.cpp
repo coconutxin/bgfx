@@ -65,7 +65,7 @@ namespace bgfx
 		);
 
 	///
-	ImageContainer* imageParseBgfx(bx::AllocatorI* _allocator, const void* _src, uint32_t _size);
+	bimg::ImageContainer* imageParseBgfx(bx::AllocatorI* _allocator, const void* _src, uint32_t _size);
 
 	///
 	bool imageConvert(
@@ -78,17 +78,17 @@ namespace bgfx
 		);
 
 	///
-	ImageContainer* imageConvert(
+	bimg::ImageContainer* imageConvert(
 		  bx::AllocatorI* _allocator
-		, TextureFormat::Enum _dstFormat
-		, const ImageContainer& _input
+		, bimg::TextureFormat::Enum _dstFormat
+		, const bimg::ImageContainer& _input
 		);
 
 } // namespace bgfx
 
 namespace bgfx
 {
-	static ImageContainer* imageParseLodePng(bx::AllocatorI* _allocator, const void* _data, uint32_t _size)
+	static bimg::ImageContainer* imageParseLodePng(bx::AllocatorI* _allocator, const void* _data, uint32_t _size)
 	{
 		static uint8_t pngMagic[] = { 0x89, 0x50, 0x4E, 0x47, 0x0d, 0x0a };
 
@@ -97,7 +97,7 @@ namespace bgfx
 			return NULL;
 		}
 
-		bgfx::TextureFormat::Enum format = bgfx::TextureFormat::RGBA8;
+		bimg::TextureFormat::Enum format = bimg::TextureFormat::RGBA8;
 		uint32_t width  = 0;
 		uint32_t height = 0;
 
@@ -117,19 +117,19 @@ namespace bgfx
 					switch (state.info_raw.colortype)
 					{
 						case LCT_GREY:
-							format = bgfx::TextureFormat::R8;
+							format = bimg::TextureFormat::R8;
 							break;
 
 						case LCT_GREY_ALPHA:
-							format = bgfx::TextureFormat::RG8;
+							format = bimg::TextureFormat::RG8;
 							break;
 
 						case LCT_RGB:
-							format = bgfx::TextureFormat::RGB8;
+							format = bimg::TextureFormat::RGB8;
 							break;
 
 						case LCT_RGBA:
-							format = bgfx::TextureFormat::RGBA8;
+							format = bimg::TextureFormat::RGBA8;
 							break;
 
 						case LCT_PALETTE:
@@ -146,7 +146,7 @@ namespace bgfx
 								uint16_t* rgba = (uint16_t*)data + ii;
 								rgba[0] = bx::toHostEndian(rgba[0], false);
 							}
-							format = bgfx::TextureFormat::R16;
+							format = bimg::TextureFormat::R16;
 							break;
 
 						case LCT_GREY_ALPHA:
@@ -156,7 +156,7 @@ namespace bgfx
 								rgba[0] = bx::toHostEndian(rgba[0], false);
 								rgba[1] = bx::toHostEndian(rgba[1], false);
 							}
-							format = bgfx::TextureFormat::RG16;
+							format = bimg::TextureFormat::RG16;
 							break;
 
 						case LCT_RGBA:
@@ -168,7 +168,7 @@ namespace bgfx
 								rgba[2] = bx::toHostEndian(rgba[2], false);
 								rgba[3] = bx::toHostEndian(rgba[3], false);
 							}
-							format = bgfx::TextureFormat::RGBA16;
+							format = bimg::TextureFormat::RGBA16;
 							break;
 
 						case LCT_RGB:
@@ -184,7 +184,7 @@ namespace bgfx
 
 		lodepng_state_cleanup(&state);
 
-		ImageContainer* output = imageAlloc(_allocator
+		bimg::ImageContainer* output = bimg::imageAlloc(_allocator
 			, format
 			, uint16_t(width)
 			, uint16_t(height)
@@ -199,7 +199,7 @@ namespace bgfx
 		return output;
 	}
 
-	static ImageContainer* imageParseTinyExr(bx::AllocatorI* _allocator, const void* _data, uint32_t _size)
+	static bimg::ImageContainer* imageParseTinyExr(bx::AllocatorI* _allocator, const void* _data, uint32_t _size)
 	{
 		EXRVersion exrVersion;
 		int result = ParseEXRVersionFromMemory(&exrVersion, (uint8_t*)_data, _size);
@@ -208,7 +208,7 @@ namespace bgfx
 			return NULL;
 		}
 
-		bgfx::TextureFormat::Enum format = bgfx::TextureFormat::RGBA8;
+		bimg::TextureFormat::Enum format = bimg::TextureFormat::RGBA8;
 		uint32_t width  = 0;
 		uint32_t height = 0;
 
@@ -258,7 +258,7 @@ namespace bgfx
 					const bool asFloat = exrHeader.pixel_types[idxR] == TINYEXR_PIXELTYPE_FLOAT;
 					uint32_t srcBpp = 32;
 					uint32_t dstBpp = asFloat ? 32 : 16;
-					format = asFloat ? TextureFormat::R32F : TextureFormat::R16F;
+					format = asFloat ? bimg::TextureFormat::R32F : bimg::TextureFormat::R16F;
 					uint32_t stepR = 1;
 					uint32_t stepG = 0;
 					uint32_t stepB = 0;
@@ -268,7 +268,7 @@ namespace bgfx
 					{
 						srcBpp += 32;
 						dstBpp = asFloat ? 64 : 32;
-						format = asFloat ? TextureFormat::RG32F : TextureFormat::RG16F;
+						format = asFloat ? bimg::TextureFormat::RG32F : bimg::TextureFormat::RG16F;
 						stepG  = 1;
 					}
 
@@ -276,7 +276,7 @@ namespace bgfx
 					{
 						srcBpp += 32;
 						dstBpp = asFloat ? 128 : 64;
-						format = asFloat ? TextureFormat::RGBA32F : TextureFormat::RGBA16F;
+						format = asFloat ? bimg::TextureFormat::RGBA32F : bimg::TextureFormat::RGBA16F;
 						stepB  = 1;
 					}
 
@@ -284,7 +284,7 @@ namespace bgfx
 					{
 						srcBpp += 32;
 						dstBpp = asFloat ? 128 : 64;
-						format = asFloat ? TextureFormat::RGBA32F : TextureFormat::RGBA16F;
+						format = asFloat ? bimg::TextureFormat::RGBA32F : bimg::TextureFormat::RGBA16F;
 						stepA  = 1;
 					}
 
@@ -321,7 +321,7 @@ namespace bgfx
 			FreeEXRHeader(&exrHeader);
 		}
 
-		ImageContainer* output = imageAlloc(_allocator
+		bimg::ImageContainer* output = bimg::imageAlloc(_allocator
 			, format
 			, uint16_t(width)
 			, uint16_t(height)
@@ -336,7 +336,7 @@ namespace bgfx
 		return output;
 	}
 
-	static ImageContainer* imageParseStbImage(bx::AllocatorI* _allocator, const void* _data, uint32_t _size)
+	static bimg::ImageContainer* imageParseStbImage(bx::AllocatorI* _allocator, const void* _data, uint32_t _size)
 	{
 		const int isHdr = stbi_is_hdr_from_memory((const uint8_t*)_data, (int)_size);
 
@@ -352,20 +352,20 @@ namespace bgfx
 			return NULL;
 		}
 
-		bgfx::TextureFormat::Enum format;
+		bimg::TextureFormat::Enum format;
 		if (isHdr)
 		{
-			format = bgfx::TextureFormat::RGBA32F;
+			format = bimg::TextureFormat::RGBA32F;
 		}
 		else
 		{
-			if       (1 == comp)   { format = bgfx::TextureFormat::R8;    }
-			else  if (2 == comp)   { format = bgfx::TextureFormat::RG8;   }
-			else  if (3 == comp)   { format = bgfx::TextureFormat::RGB8;  }
-			else/*if (4 == comp)*/ { format = bgfx::TextureFormat::RGBA8; }
+			if       (1 == comp)   { format = bimg::TextureFormat::R8;    }
+			else  if (2 == comp)   { format = bimg::TextureFormat::RG8;   }
+			else  if (3 == comp)   { format = bimg::TextureFormat::RGB8;  }
+			else/*if (4 == comp)*/ { format = bimg::TextureFormat::RGBA8; }
 		}
 
-		ImageContainer* output = imageAlloc(_allocator
+		bimg::ImageContainer* output = bimg::imageAlloc(_allocator
 			, format
 			, uint16_t(width)
 			, uint16_t(height)
@@ -380,9 +380,9 @@ namespace bgfx
 		return output;
 	}
 
-	ImageContainer* imageParse(bx::AllocatorI* _allocator, const void* _data, uint32_t _size, TextureFormat::Enum _dstFormat)
+	bimg::ImageContainer* imageParse(bx::AllocatorI* _allocator, const void* _data, uint32_t _size, bimg::TextureFormat::Enum _dstFormat)
 	{
-		ImageContainer* input = imageParseBgfx    (_allocator, _data, _size)        ;
+		bimg::ImageContainer* input = imageParseBgfx    (_allocator, _data, _size)        ;
 		input = NULL == input ? imageParseLodePng (_allocator, _data, _size) : input;
 		input = NULL == input ? imageParseTinyExr (_allocator, _data, _size) : input;
 		input = NULL == input ? imageParseStbImage(_allocator, _data, _size) : input;
@@ -402,7 +402,7 @@ namespace bgfx
 			return input;
 		}
 
-		ImageContainer* output = imageConvert(_allocator, _dstFormat, *input);
+		bimg::ImageContainer* output = bgfx::imageConvert(_allocator, _dstFormat, *input);
 		imageFree(input);
 
 		return output;
