@@ -359,7 +359,7 @@ inline bool IsValid(const char* cname, char retOrder, char retType, char argOrde
     const std::string name(cname);
 
     // these do not have vec1 versions
-    if (dim0 == 1 && (name == "length" || name == "normalize" || name == "reflect" || name == "refract"))
+    if (dim0 == 1 && (name == "normalize" || name == "reflect" || name == "refract"))
         return false;
 
     if (!IsTextureType(argOrder) && (isVec && dim0 == 1)) // avoid vec1
@@ -625,7 +625,7 @@ void TBuiltInParseablesHlsl::initialize(int /*version*/, EProfile /*profile*/, c
         { "isinf",                            nullptr, "B" ,      "SVM",            "F",             EShLangAll,    false },
         { "isnan",                            nullptr, "B" ,      "SVM",            "F",             EShLangAll,    false },
         { "ldexp",                            nullptr, nullptr,   "SVM,",           "F,",            EShLangAll,    false },
-        { "length",                           "S",     "F",       "V",              "F",             EShLangAll,    false },
+        { "length",                           "S",     "F",       "SV",             "F",             EShLangAll,    false },
         { "lerp",                             nullptr, nullptr,   "VM,,",           "F,,",           EShLangAll,    false },
         { "lerp",                             nullptr, nullptr,   "SVM,,S",         "F,,",           EShLangAll,    false },
         { "lit",                              "V4",    "F",       "S,,",            "F,,",           EShLangAll,    false },
@@ -871,26 +871,6 @@ void TBuiltInParseablesHlsl::initialize(int /*version*/, EProfile /*profile*/, c
         { "InterlockedMin",                   nullptr, nullptr,   "-",              "-",              EShLangAll,   true },
         { "InterlockedOr",                    nullptr, nullptr,   "-",              "-",              EShLangAll,   true },
         { "InterlockedXor",                   nullptr, nullptr,   "-",              "-",              EShLangAll,   true },
-
-        // Methods for structurebuffers.  TODO: wildcard type matching.
-        { "Load",                             nullptr, nullptr,   "-",              "-",             EShLangAll },
-        { "Load2",                            nullptr, nullptr,   "-",              "-",             EShLangAll },
-        { "Load3",                            nullptr, nullptr,   "-",              "-",             EShLangAll },
-        { "Load4",                            nullptr, nullptr,   "-",              "-",             EShLangAll },
-        { "Store",                            nullptr, nullptr,   "-",              "-",             EShLangAll },
-        { "Store2",                           nullptr, nullptr,   "-",              "-",             EShLangAll },
-        { "Store3",                           nullptr, nullptr,   "-",              "-",             EShLangAll },
-        { "Store4",                           nullptr, nullptr,   "-",              "-",             EShLangAll },
-        { "GetDimensions",                    nullptr, nullptr,   "-",              "-",             EShLangAll },
-        { "InterlockedAdd",                   nullptr, nullptr,   "-",              "-",             EShLangAll },
-        { "InterlockedAnd",                   nullptr, nullptr,   "-",              "-",             EShLangAll },
-        { "InterlockedCompareExchange",       nullptr, nullptr,   "-",              "-",             EShLangAll },
-        { "InterlockedCompareStore",          nullptr, nullptr,   "-",              "-",             EShLangAll },
-        { "InterlockedExchange",              nullptr, nullptr,   "-",              "-",             EShLangAll },
-        { "InterlockedMax",                   nullptr, nullptr,   "-",              "-",             EShLangAll },
-        { "InterlockedMin",                   nullptr, nullptr,   "-",              "-",             EShLangAll },
-        { "InterlockedOr",                    nullptr, nullptr,   "-",              "-",             EShLangAll },
-        { "InterlockedXor",                   nullptr, nullptr,   "-",              "-",             EShLangAll },
 
         // Mark end of list, since we want to avoid a range-based for, as some compilers don't handle it yet.
         { nullptr,                            nullptr, nullptr,   nullptr,      nullptr,  0, false },
@@ -1210,15 +1190,6 @@ void TBuiltInParseablesHlsl::identifyBuiltIns(int /*version*/, EProfile /*profil
     symbolTable.relateToOperator(BUILTIN_PREFIX "InterlockedMin",              EOpInterlockedMin);
     symbolTable.relateToOperator(BUILTIN_PREFIX "InterlockedOr",               EOpInterlockedOr);
     symbolTable.relateToOperator(BUILTIN_PREFIX "InterlockedXor",              EOpInterlockedXor);
-
-    // Structure buffer methods (excluding associations already made above for texture methods w/ same name)
-    symbolTable.relateToOperator("Load2",                       EOpMethodLoad2);
-    symbolTable.relateToOperator("Load3",                       EOpMethodLoad3);
-    symbolTable.relateToOperator("Load4",                       EOpMethodLoad4);
-    symbolTable.relateToOperator("Store",                       EOpMethodStore);
-    symbolTable.relateToOperator("Store2",                      EOpMethodStore2);
-    symbolTable.relateToOperator("Store3",                      EOpMethodStore3);
-    symbolTable.relateToOperator("Store4",                      EOpMethodStore4);
 
     // SM5 Texture methods
     symbolTable.relateToOperator(BUILTIN_PREFIX "GatherRed",                   EOpMethodGatherRed);
